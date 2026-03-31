@@ -5,7 +5,7 @@ import { resolveContext, findPluginRoot, findMarketplaceRoot, getMarketplaceCont
 import { writeMarketplace } from '../lib/marketplace.js';
 import { writePlugin } from '../lib/plugin.js';
 import { bumpVersion } from '../lib/semver.js';
-import { gitCommitAndTag, isGitRepo } from '../lib/git.js';
+import { gitCommitAndTag, isGitRepo, detectBumpTypeFromHistory } from '../lib/git.js';
 import { BumpType, MarketplacePlugin } from '../types.js';
 
 export interface BumpOptions {
@@ -13,7 +13,7 @@ export interface BumpOptions {
 }
 
 export async function bump(
-  type: BumpType,
+  type: BumpType | 'auto',
   pluginName: string | undefined,
   opts: BumpOptions
 ): Promise<void> {
@@ -52,6 +52,20 @@ export async function bump(
   }
 
   const { marketplace, plugin } = context;
+
+  // Resolve 'auto' by reading conventional commits from git history
+  if (type === 'auto') {
+    const detected = await detectBumpTypeFromHistory(marketplace.rootDir, plugin.pluginDir);
+    if (!detected) {
+      console.error(
+        chalk.red('Error: No commits found since last tag. Cannot auto-detect bump type.') +
+          '\nSpecify a type explicitly: cmm bump patch|minor|major'
+      );
+      process.exit(1);
+    }
+    type = detected;
+    console.log(chalk.gray(`Auto-detected bump type from git history: ${chalk.bold(type)}\n`));
+  }
 
   // Compute new versions
   const currentPluginVersion = plugin.config.version;
