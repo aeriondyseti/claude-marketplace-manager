@@ -1,6 +1,6 @@
 {
   "name": "@aeriondyseti/claude-marketplace-manager",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "CLI tool to manage plugin versions and structure in a Claude Code marketplace",
   "type": "module",
   "bin": {
